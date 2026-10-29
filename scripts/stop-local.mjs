@@ -36,8 +36,24 @@ if (!health || health.name !== 'pi-multi-agent-workspace' || health.pid !== pid)
   throw new Error('无法确认锁文件对应当前工作区服务。为避免结束错误进程，已取消操作。');
 }
 
-process.kill(pid, 'SIGTERM');
-for (let attempt = 0; attempt < 40; attempt++) {
+const stateResponse = await fetch(`${url}/api/state`, { signal: AbortSignal.timeout(1500) });
+if (!stateResponse.ok) throw new Error('无法读取本地服务的停止令牌。');
+const state = await stateResponse.json();
+const shutdownResponse = await fetch(`${url}/api/shutdown`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Workspace-Token': state.csrf,
+  },
+  body: '{}',
+  signal: AbortSignal.timeout(3000),
+});
+if (!shutdownResponse.ok) {
+  const body = await shutdownResponse.json().catch(() => ({}));
+  throw new Error(body.error || '本地服务拒绝优雅停止请求。');
+}
+
+for (let attempt = 0; attempt < 120; attempt++) {
   await delay(100);
   try { process.kill(pid, 0); } catch {
     const lockPath = join(dataDir, 'server.lock');
@@ -47,4 +63,4 @@ for (let attempt = 0; attempt < 40; attempt++) {
     process.exit(0);
   }
 }
-throw new Error('服务未能在 4 秒内停止，请在任务管理器中结束对应的 Node.js 进程。');
+throw new Error('服务未能在 12 秒内优雅停止。没有强制结束进程，以免跳过数据库和会话收尾。');

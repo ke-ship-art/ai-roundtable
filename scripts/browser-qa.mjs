@@ -35,10 +35,18 @@ try{
  assert.equal(await c.evaluate(()=>document.querySelector('[data-member-model]').value),after);
  assert(await c.evaluate(()=>document.querySelector('#messages').textContent.includes('原 Pi Session 与上下文继续保留')));
 
+ const state=await fetch(new URL('/api/state',url)).then(r=>r.json()),roomId=state.rooms[0].id;
+ const post=async(path,body)=>{const response=await fetch(new URL(`/api/${path}`,url),{method:'POST',headers:{'Content-Type':'application/json','X-Workspace-Token':state.csrf},body:JSON.stringify(body)});assert.equal(response.ok,true);};
+ await post('control',{room:roomId,action:'pause'});
+ await post('message',{room:roomId,to:null,text:'## Markdown 验收\n\n**加粗文字**'});
+ await wait(()=>document.querySelector('#messages .markdown strong')?.textContent==='加粗文字');
+
  await mkdir('artifacts',{recursive:true});await c.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
  let shot=await c.send('Page.captureScreenshot',{format:'png'});await writeFile('artifacts/settings-and-switch.png',Buffer.from(shot.data,'base64'));
  await c.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});assert(await c.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
  shot=await c.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await writeFile('artifacts/settings-mobile.png',Buffer.from(shot.data,'base64'));
  await c.send('Emulation.clearDeviceMetricsOverride');
- console.log('PASS: profile/model/identity setup, in-room model switch, reload persistence, responsive layout.');
+ await c.evaluate(()=>{window.confirm=()=>true;document.querySelector('#deleteRoom').click();});
+ await wait(()=>document.querySelector('#roomCount')?.textContent==='0');
+ console.log('PASS: setup, incremental messages, Markdown, model switch persistence, room deletion, responsive layout.');
 }finally{await c.disconnect();}
