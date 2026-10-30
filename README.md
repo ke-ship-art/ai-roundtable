@@ -4,10 +4,10 @@
 
 ## 桌面版启动（推荐）
 
-可直接双击的 Windows 成品位于 `release/AI Roundtable/AI Roundtable.exe`，运行时不要求另装 Node.js、浏览器或任何启动脚本。`release/AI-Roundtable-0.4.0-win-x64.zip` 是便于复制到其他电脑的同版压缩包。
+Windows 成品可从 [GitHub Releases](https://github.com/ke-ship-art/ai-roundtable/releases/latest) 下载，运行时不要求另装 Node.js、浏览器或任何启动脚本。本地源码工作副本生成的程序位于 `release/AI Roundtable/AI Roundtable.exe`，同版压缩包为 `release/AI-Roundtable-0.4.0-win-x64.zip`。
 
-1. 打开项目的 `release` 文件夹，再打开 `AI Roundtable` 文件夹。
-2. 双击 `AI Roundtable.exe`。重复双击不会启动第二套后端，而会切回现有窗口。
+1. 从 Releases 下载 `AI-Roundtable-0.4.0-win-x64.zip`；如果使用本地源码工作副本，也可以直接打开项目的 `release/AI Roundtable` 文件夹。
+2. 解压 ZIP，打开得到的文件夹，再双击 `AI Roundtable.exe`。重复双击不会启动第二套后端，而会切回现有窗口。
 3. 如果使用 ZIP 复制到其他电脑，请先右键 ZIP，点击“属性”，勾选底部“解除锁定”，点击“应用”和“确定”，然后再右键 ZIP 选择“全部解压”。不要直接在压缩包预览窗口中运行程序。这样可避免下载标记继续传给包内的 DLL 和资源文件。
 4. 本地构建没有购买代码签名证书。如果 Windows 首次仍显示“Windows 已保护你的电脑”，确认文件来自本项目后点击“更多信息”，再点击“仍要运行”。
 5. 正常退出时直接点击窗口右上角“×”。桌面进程会先中止在途请求、收尾 Pi Session、关闭 SQLite，再退出全部子进程；不需要另外停止服务。
@@ -119,4 +119,4 @@ SSE 断线重连后根据本地最后序号补拉已提交消息，断线期间�
 - SDK：https://pi.dev/docs/latest/sdk
 - 安装包随附的 `examples/sdk/12-full-control.ts`、会话与工具类型声明是当前实现的接口依据。
 
-项目已建立本地 Git 历史，`data/`、`release/`、`.env` 和 `node_modules/` 不进入版本库。尚未发布到公网或推送至 GitHub。
+公开仓库：https://github.com/ke-ship-art/ai-roundtable 。`data/`、`release/`、`.env` 和 `node_modules/` 不进入版本库，聊天、凭据和本地运行数据不会随源码推送。
