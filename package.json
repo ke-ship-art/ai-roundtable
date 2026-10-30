@@ -1,19 +1,64 @@
 {
   "name": "pi-multi-agent-workspace",
-  "version": "0.2.0",
+  "version": "0.3.0",
+  "description": "Local multi-agent collaboration workspace powered by Pi",
   "type": "module",
+  "main": "desktop/main.mjs",
   "license": "MIT",
+  "author": "Pi Workspace contributors",
   "engines": {
     "node": ">=22.19.0"
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
-    "check": "node --check server.mjs && node --check src/store.mjs && node --check src/engine.mjs && node --check src/pi-session.mjs && node --check public/app.js",
+    "desktop": "electron .",
+    "check": "node --check server.mjs && node --check src/store.mjs && node --check src/engine.mjs && node --check src/pi-session.mjs && node --check public/app.js && node --check desktop/data.mjs && node --check desktop/main.mjs",
     "test": "node --test tests/*.test.mjs",
-    "test:live": "node --env-file-if-exists=.env scripts/live-test.mjs"
+    "test:live": "node --env-file-if-exists=.env scripts/live-test.mjs",
+    "package:win": "npm run check && npm test && electron-builder --win zip --x64"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "1.4.0",
     "@sinclair/typebox": "0.34.41"
+  },
+  "devDependencies": {
+    "electron": "44.10.0",
+    "electron-builder": "26.15.3"
+  },
+  "overrides": {
+    "@earendil-works/pi-coding-agent": {
+      "undici": "8.12.3"
+    },
+    "openai": {
+      "undici": "8.12.3"
+    }
+  },
+  "build": {
+    "appId": "local.piworkspace.desktop",
+    "productName": "Pi Workspace",
+    "electronVersion": "44.10.0",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**/*",
+      "public/**/*",
+      "src/**/*",
+      "server.mjs",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signExecutable": false
+    },
+    "artifactName": "Pi-Workspace-${version}-win-${arch}.${ext}"
   }
 }

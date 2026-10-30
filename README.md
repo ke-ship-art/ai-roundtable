@@ -2,30 +2,31 @@
 
 本地运行、MIT 开源的多智能体协作 Web 工作区。基于 **@earendil-works/pi-coding-agent 1.4.0** 的真实 AgentSession，非多模型轮流聊天。各成员独立推理、主动定向提问、委派、领取共享任务、交付文本成果。实际测试记录见 [VERIFICATION.md](VERIFICATION.md)。
 
-## 启动
+## 桌面版启动（推荐）
 
-需要 Node.js 22.19.0+（Pi SDK 1.4.0 的最低要求；本机验证版本 24.22.1）。`start.cmd` 会先检查实际版本，不符合时明确停止。
+Windows 成品位于 `release/Pi-Workspace-0.3.0-win-x64.zip`，运行时不要求另装 Node.js，也不需要浏览器、`start.cmd` 或 `stop.cmd`。
 
-1. 打开项目文件夹，双击 `start.cmd`。脚本会等待本地服务就绪，然后自动用默认浏览器打开工作区。重复双击时会直接打开已经运行的网页，不会启动第二个服务。
-2. 首次启动如果还没有依赖，脚本会自动执行 `npm ci`。看到浏览器打开 `http://127.0.0.1:4317` 即表示启动成功。
-3. 需要停止后台服务时，双击同一文件夹中的 `stop.cmd`。它会调用只允许本地 CSRF 令牌的停止接口，先中止请求、收尾 Pi Session、关闭 SQLite 并移除锁文件，不在 Windows 上用伪 `SIGTERM` 强制结束。
+1. 在资源管理器中右键 `Pi-Workspace-0.3.0-win-x64.zip`，点击“全部解压”，再点击“提取”。不要直接在压缩包预览窗口中运行程序。
+2. 打开解压得到的文件夹，双击 `Pi Workspace.exe`。重复双击不会启动第二套后端，而会切回现有窗口。
+3. 本地构建没有购买代码签名证书。如果 Windows 首次显示“Windows 已保护你的电脑”，确认文件来自本项目后点击“更多信息”，再点击“仍要运行”。
+4. 正常退出时直接点击窗口右上角“×”。桌面进程会先中止在途请求、收尾 Pi Session、关闭 SQLite，再退出全部子进程；不需要另外停止服务。
+5. 桌面数据保存在 `%APPDATA%\Pi Workspace\data`。第一次从本项目的 `release` 目录启动时，如果发现旧版 `data/`，应用会先优雅停止旧网页服务，再复制聊天、成果、Session 和加密凭据；不会覆盖已经初始化的桌面数据。
 
-也可以在终端手动启动：
+## 源码开发模式
 
-1. 在项目文件夹空白处右键，点击“在终端中打开”。或在 PowerShell 输入：
-   ```powershell
-   cd "C:\Users\heyon\Desktop\AI Agent\CodexLab\pi-workspace"
-   ```
-2. 首次安装或复制到另一台机器后，输入 `npm ci`，等待安装结束。本机已安装依赖，可跳过。
-3. 输入 `npm start`。看到 `Pi Workspace: http://127.0.0.1:4317` 表示服务已启动。
-4. 在浏览器地址栏输入 `http://127.0.0.1:4317`。保持终端开启；关闭时在终端按 Ctrl+C。不要同时启动两个使用同一数据目录的服务。
+源码开发需要 Node.js 22.19.0+（Pi SDK 1.4.0 的最低要求；本机验证版本 24.22.1）。
+
+1. 在项目文件夹空白处右键，点击“在终端中打开”。
+2. 输入 `npm ci` 安装依赖。
+3. 输入 `npm run desktop` 启动 Electron 桌面开发版；关闭窗口即停止服务。
+4. 仍可用 `npm start` 或 `start.cmd` 启动旧式浏览器调试入口。只有这种开发入口才需要 `stop.cmd` 或在终端按 Ctrl+C。
 
 ## 配置与使用
 
 > 从旧版升级时，历史工作区、Agent 和模型会自动迁移。旧版从未将 API Key 写入磁盘，因此升级后需要在“配置中心”为每个接入重新输入一次密钥。之后密钥会加密保存，无需每次重填。
 
 1. 点击左下角“配置中心”，按页面顺序先添加“接入配置”。填写名称、API 基础地址、协议和认证方式。Agnes 的基础地址为 `https://api.agnes-ai.cn/v1`，协议为 `openai-completions`。
-2. 在接入配置中填写 API Key 并保存。Windows 使用当前用户 DPAPI，macOS 使用 Keychain，Linux 使用 Secret Service（需安装 `secret-tool`）。`data/credentials.enc` 只保存密文或凭据库标记，明文不会进入 SQLite、浏览器状态、源码或日志。也可以只填写环境变量名。修改 API 地址、协议或认证方式时，需要重新输入密钥，防止旧密钥被发往新地址。
+2. 在接入配置中填写 API Key 并保存。Windows 使用当前用户 DPAPI，macOS 使用 Keychain，Linux 使用 Secret Service（需安装 `secret-tool`）。桌面版的 `%APPDATA%\Pi Workspace\data\credentials.enc` 只保存密文或凭据库标记，明文不会进入 SQLite、界面状态、源码或日志。也可以只填写环境变量名。修改 API 地址、协议或认证方式时，需要重新输入密钥，防止旧密钥被发往新地址。
 3. 在“接入配置”的已保存项右侧点击“模型目录”，可从供应商读取模型；也可在下方“模型”区域点击“添加模型”手动填写。分别设置显示名称、模型 ID、上下文长度和输出上限。接入凭据可供同一服务下的多个模型复用。
 4. 在“Agent 身份”区域设置名称、职责、默认模型和成果权限。身份、接入和模型互相独立；多个 Agent 可以使用同一模型，同一 Agent 也能在工作区中切换模型。
 5. 点击“新建工作区”，填写名称、勾选至少两个成员，点击“创建工作区”。每个工作区为每位成员新建独立 Pi Session。
@@ -38,11 +39,12 @@
 ## 架构
 
 ```text
-浏览器（原生 ES modules / CSS）
+Electron BrowserWindow（原生 ES modules / CSS）
+  ├─ 点击“×” → 等待工作区收尾 → 关闭内嵌服务和桌面进程
   ├─ POST：消息、运行控制、配置、预算
   └─ SSE：仅推送新消息 / 单工作区元数据 / 流式片段
        │
-Node.js HTTP 服务（仅 127.0.0.1）
+内嵌 Node.js HTTP 服务（仅随机 127.0.0.1 端口）
        │
 事件驱动调度器 ── SQLite WAL
   ├─ 小型元数据快照：配置 / 队列 / 成员状态 / 任务
@@ -61,6 +63,7 @@ Node.js HTTP 服务（仅 127.0.0.1）
 - `src/store.mjs`：Node 原生 SQLite，WAL + FULL 同步；消息、成果正文和工具幂等结果按行存储，不进入元数据快照。
 - `src/http-utils.mjs`：UTF-8 流式请求解码、体积限制和统一输入校验。
 - `server.mjs`：HTTP / SSE、输入校验、同源与 Host 检查、CSRF token、静态资源与 API。
+- `desktop/`：Electron 单实例窗口、桌面数据迁移、外部导航隔离和关闭时的优雅收尾。
 - `public/`：无需构建、无 CDN 的响应式 Web 客户端。
 
 用户消息唤醒指定成员或全体。Agent 的 `send_message` 唤醒其选择的目标，调度器不决定讨论顺序，也不自动轮询模型。普通最终回复仅显示而不广播唤醒，避免每一句话引发所有成员回复。无待办事件时自然静止，不进行后台自我思考。
@@ -94,6 +97,7 @@ Node.js HTTP 服务（仅 127.0.0.1）
 ```powershell
 npm run check
 npm test
+npm run package:win
 # 先在终端自行设置 AGNES_API_KEY；不在命令中输出密钥。
 $env:LIVE_GAP_MS = '65000'
 npm run test:live
@@ -101,13 +105,15 @@ npm run test:live
 node scripts/resume-live.mjs
 ```
 
-`npm run check` 对服务端、存储、引擎、Pi 适配层和浏览器入口执行语法检查。核心源码已按单职责函数与多行路由格式展开，根目录 `.editorconfig` 统一 UTF-8、LF 和两空格缩进。Pi SDK 保持精确锁定 `1.4.0`；升级前必须先运行完整测试与真实浏览器验收。
+`npm run check` 对桌面主进程、服务端、存储、引擎、Pi 适配层和界面入口执行语法检查。`npm run package:win` 会先运行检查与测试，再生成 ZIP 桌面发行包。核心源码已按单职责函数与多行路由格式展开，根目录 `.editorconfig` 统一 UTF-8、LF 和两空格缩进。Pi SDK 保持精确锁定 `1.4.0`；升级前必须先运行完整测试与真实界面验收。
 
 `test:live` 必须有真实密钥，缺失时失败退出，不回退到模拟响应。它通过真实 HTTP API 创建两位 Agent、发任务、等待模型工具调用，核对双向交接、任务完成、成果保存和独立 Session。报告保存在忽略提交的 `artifacts/live-report.json`，不包含凭据。免费服务限流时可能需要较长等待和显式恢复。
 
 本机 UI 验证使用 `scripts/browser-qa.mjs`，复用工作区相邻的 `chrome-cdp` 项目；它不是发布包的运行依赖。该脚本在独立数据目录中验证增量消息、Markdown、模型切换恢复、工作区删除和响应式布局。
 
 ## 已知局限
+
+Windows EXE 是本地未签名构建，首次运行可能触发 SmartScreen；发布给其他用户前应购买代码签名证书并配置 CI 签名。Electron 发行包约 165MB，因为包含 Chromium 和 Node.js 运行时。生产依赖使用安全覆盖后的 `undici 8.12.3`，`npm audit --omit=dev` 为 0 项。
 
 这是本地单用户版本，没有团队登录、远程部署、文件执行沙箱、网络搜索、Shell、MCP 管理或多人权限。适用于讨论、方案审查和文本交付，不能宣称已经执行外部代码或修改用户文件。若要添加执行能力，应在独立隔离进程中实现权限、审批和资源限制。
 
