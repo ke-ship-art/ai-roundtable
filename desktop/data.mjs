@@ -49,7 +49,7 @@ export async function stopLegacyServer(directory, port = 4317) {
   } catch {
     health = null;
   }
-  if (health?.name !== 'pi-multi-agent-workspace' || health.pid !== pid) {
+  if (!['ai-roundtable', 'pi-multi-agent-workspace'].includes(health?.name) || health.pid !== pid) {
     throw new Error(
       '检测到旧版服务锁，但无法确认对应进程。请先双击旧版 stop.cmd，再启动桌面版。',
     );

@@ -6,21 +6,21 @@ import { migrateLegacyData } from './data.mjs';
 import { start } from '../server.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const applicationName = 'Pi Workspace';
+const applicationName = 'AI Roundtable';
 const smokeTest = process.argv.includes('--desktop-smoke');
 
 app.setName(applicationName);
-app.setAppUserModelId('local.piworkspace.desktop');
+app.setAppUserModelId('local.airoundtable.desktop');
 app.setPath(
   'userData',
-  process.env.PI_WORKSPACE_USER_DATA_DIR
-    ? resolve(process.env.PI_WORKSPACE_USER_DATA_DIR)
+  process.env.AI_ROUNDTABLE_USER_DATA_DIR
+    ? resolve(process.env.AI_ROUNDTABLE_USER_DATA_DIR)
     : join(app.getPath('appData'), applicationName),
 );
 mkdirSync(app.getPath('userData'), { recursive: true });
 
-const desktopLogDirectory = process.env.PI_WORKSPACE_DATA_DIR
-  ? resolve(process.env.PI_WORKSPACE_DATA_DIR)
+const desktopLogDirectory = process.env.AI_ROUNDTABLE_DATA_DIR
+  ? resolve(process.env.AI_ROUNDTABLE_DATA_DIR)
   : app.getPath('userData');
 mkdirSync(desktopLogDirectory, { recursive: true });
 const desktopLogPath = join(desktopLogDirectory, 'desktop.log');
@@ -44,7 +44,8 @@ function focusWindow() {
 function legacyCandidates() {
   const executableDirectory = process.env.PORTABLE_EXECUTABLE_DIR || dirname(process.execPath);
   return [
-    process.env.PI_WORKSPACE_LEGACY_DATA_DIR,
+    process.env.AI_ROUNDTABLE_LEGACY_DATA_DIR,
+    join(app.getPath('appData'), 'Pi Workspace', 'data'),
     join(executableDirectory, 'data'),
     join(executableDirectory, '..', 'data'),
     join(executableDirectory, '..', '..', 'data'),
@@ -61,7 +62,7 @@ async function gracefulQuit() {
       log('workspace closed');
     } catch (error) {
       log(`shutdown error: ${error?.stack || error}`);
-      dialog.showErrorBox('Pi Workspace 关闭异常', String(error?.stack || error));
+      dialog.showErrorBox('AI Roundtable 关闭异常', String(error?.stack || error));
     } finally {
       allowQuit = true;
       app.quit();
@@ -83,19 +84,19 @@ function protectWindow(target, origin) {
 }
 
 async function createApplication() {
-  const configuredData = process.env.PI_WORKSPACE_DATA_DIR;
+  const configuredData = process.env.AI_ROUNDTABLE_DATA_DIR;
   const dataDirectory = configuredData
     ? resolve(configuredData)
     : join(app.getPath('userData'), 'data');
   const legacyPort = Number(process.env.PORT || 4317);
   const candidates = configuredData
-    ? [process.env.PI_WORKSPACE_LEGACY_DATA_DIR]
+    ? [process.env.AI_ROUNDTABLE_LEGACY_DATA_DIR]
     : legacyCandidates();
   const migratedFrom = await migrateLegacyData(dataDirectory, candidates, { port: legacyPort });
   log(`data directory=${dataDirectory}${migratedFrom ? ` migrated-from=${migratedFrom}` : ''}`);
 
   workspace = await start({
-    port: Number(process.env.PI_WORKSPACE_PORT || 0),
+    port: Number(process.env.AI_ROUNDTABLE_PORT || 0),
     dataDir: dataDirectory,
     exitOnShutdown: false,
   });
@@ -155,7 +156,7 @@ if (!hasLock) {
   });
   app.whenReady().then(createApplication).catch(error => {
     log(`startup error: ${error?.stack || error}`);
-    dialog.showErrorBox('Pi Workspace 启动失败', String(error?.stack || error));
+    dialog.showErrorBox('AI Roundtable 启动失败', String(error?.stack || error));
     allowQuit = true;
     app.quit();
   });

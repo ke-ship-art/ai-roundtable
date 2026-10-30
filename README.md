@@ -1,16 +1,16 @@
-# Pi Workspace — Multi-Agent Collaboration
+# AI Roundtable — Multi-Agent Collaboration
 
-本地运行、MIT 开源的多智能体协作 Web 工作区。基于 **@earendil-works/pi-coding-agent 1.4.0** 的真实 AgentSession，非多模型轮流聊天。各成员独立推理、主动定向提问、委派、领取共享任务、交付文本成果。实际测试记录见 [VERIFICATION.md](VERIFICATION.md)。
+本地运行、MIT 开源的多智能体圆桌协作桌面应用。基于 **@earendil-works/pi-coding-agent 1.4.0** 的真实 AgentSession，非多模型轮流聊天。各成员独立推理、主动定向提问、委派、领取共享任务、交付文本成果。实际测试记录见 [VERIFICATION.md](VERIFICATION.md)。
 
 ## 桌面版启动（推荐）
 
-Windows 成品位于 `release/Pi-Workspace-0.3.0-win-x64.zip`，运行时不要求另装 Node.js，也不需要浏览器、`start.cmd` 或 `stop.cmd`。
+Windows 成品位于 `release/AI-Roundtable-0.4.0-win-x64.zip`，运行时不要求另装 Node.js、浏览器或任何启动脚本。
 
-1. 在资源管理器中右键 `Pi-Workspace-0.3.0-win-x64.zip`，点击“全部解压”，再点击“提取”。不要直接在压缩包预览窗口中运行程序。
-2. 打开解压得到的文件夹，双击 `Pi Workspace.exe`。重复双击不会启动第二套后端，而会切回现有窗口。
+1. 在资源管理器中右键 `AI-Roundtable-0.4.0-win-x64.zip`，点击“全部解压”，再点击“提取”。不要直接在压缩包预览窗口中运行程序。
+2. 打开解压得到的文件夹，双击 `AI Roundtable.exe`。重复双击不会启动第二套后端，而会切回现有窗口。
 3. 本地构建没有购买代码签名证书。如果 Windows 首次显示“Windows 已保护你的电脑”，确认文件来自本项目后点击“更多信息”，再点击“仍要运行”。
 4. 正常退出时直接点击窗口右上角“×”。桌面进程会先中止在途请求、收尾 Pi Session、关闭 SQLite，再退出全部子进程；不需要另外停止服务。
-5. 桌面数据保存在 `%APPDATA%\Pi Workspace\data`。第一次从本项目的 `release` 目录启动时，如果发现旧版 `data/`，应用会先优雅停止旧网页服务，再复制聊天、成果、Session 和加密凭据；不会覆盖已经初始化的桌面数据。
+5. 桌面数据保存在 `%APPDATA%\AI Roundtable\data`。第一次启动时，如果发现旧项目 `data/` 或旧桌面数据，应用会先优雅停止旧服务，再复制聊天、成果、Session 和加密凭据；不会覆盖已经初始化的新数据。
 
 ## 源码开发模式
 
@@ -18,15 +18,14 @@ Windows 成品位于 `release/Pi-Workspace-0.3.0-win-x64.zip`，运行时不要�
 
 1. 在项目文件夹空白处右键，点击“在终端中打开”。
 2. 输入 `npm ci` 安装依赖。
-3. 输入 `npm run desktop` 启动 Electron 桌面开发版；关闭窗口即停止服务。
-4. 仍可用 `npm start` 或 `start.cmd` 启动旧式浏览器调试入口。只有这种开发入口才需要 `stop.cmd` 或在终端按 Ctrl+C。
+3. 输入 `npm run desktop` 启动 Electron 桌面开发版；关闭窗口即完成保存和停止。
 
 ## 配置与使用
 
 > 从旧版升级时，历史工作区、Agent 和模型会自动迁移。旧版从未将 API Key 写入磁盘，因此升级后需要在“配置中心”为每个接入重新输入一次密钥。之后密钥会加密保存，无需每次重填。
 
 1. 点击左下角“配置中心”，按页面顺序先添加“接入配置”。填写名称、API 基础地址、协议和认证方式。Agnes 的基础地址为 `https://api.agnes-ai.cn/v1`，协议为 `openai-completions`。
-2. 在接入配置中填写 API Key 并保存。Windows 使用当前用户 DPAPI，macOS 使用 Keychain，Linux 使用 Secret Service（需安装 `secret-tool`）。桌面版的 `%APPDATA%\Pi Workspace\data\credentials.enc` 只保存密文或凭据库标记，明文不会进入 SQLite、界面状态、源码或日志。也可以只填写环境变量名。修改 API 地址、协议或认证方式时，需要重新输入密钥，防止旧密钥被发往新地址。
+2. 在接入配置中填写 API Key 并保存。Windows 使用当前用户 DPAPI，macOS 使用 Keychain，Linux 使用 Secret Service（需安装 `secret-tool`）。桌面版的 `%APPDATA%\AI Roundtable\data\credentials.enc` 只保存密文或凭据库标记，明文不会进入 SQLite、界面状态、源码或日志。也可以只填写环境变量名。修改 API 地址、协议或认证方式时，需要重新输入密钥，防止旧密钥被发往新地址。
 3. 在“接入配置”的已保存项右侧点击“模型目录”，可从供应商读取模型；也可在下方“模型”区域点击“添加模型”手动填写。分别设置显示名称、模型 ID、上下文长度和输出上限。接入凭据可供同一服务下的多个模型复用。
 4. 在“Agent 身份”区域设置名称、职责、默认模型和成果权限。身份、接入和模型互相独立；多个 Agent 可以使用同一模型，同一 Agent 也能在工作区中切换模型。
 5. 点击“新建工作区”，填写名称、勾选至少两个成员，点击“创建工作区”。每个工作区为每位成员新建独立 Pi Session。
@@ -96,20 +95,10 @@ Electron BrowserWindow（原生 ES modules / CSS）
 
 ```powershell
 npm run check
-npm test
 npm run package:win
-# 先在终端自行设置 AGNES_API_KEY；不在命令中输出密钥。
-$env:LIVE_GAP_MS = '65000'
-npm run test:live
-# 恢复最近一次真实测试的持久会话：
-node scripts/resume-live.mjs
 ```
 
-`npm run check` 对桌面主进程、服务端、存储、引擎、Pi 适配层和界面入口执行语法检查。`npm run package:win` 会先运行检查与测试，再生成 ZIP 桌面发行包。核心源码已按单职责函数与多行路由格式展开，根目录 `.editorconfig` 统一 UTF-8、LF 和两空格缩进。Pi SDK 保持精确锁定 `1.4.0`；升级前必须先运行完整测试与真实界面验收。
-
-`test:live` 必须有真实密钥，缺失时失败退出，不回退到模拟响应。它通过真实 HTTP API 创建两位 Agent、发任务、等待模型工具调用，核对双向交接、任务完成、成果保存和独立 Session。报告保存在忽略提交的 `artifacts/live-report.json`，不包含凭据。免费服务限流时可能需要较长等待和显式恢复。
-
-本机 UI 验证使用 `scripts/browser-qa.mjs`，复用工作区相邻的 `chrome-cdp` 项目；它不是发布包的运行依赖。该脚本在独立数据目录中验证增量消息、Markdown、模型切换恢复、工作区删除和响应式布局。
+`npm run check` 对桌面主进程、服务端、存储、引擎、Pi 适配层和界面入口执行语法检查。`npm run package:win` 会先运行检查，再生成 ZIP 桌面发行包。Pi SDK 保持精确锁定 `1.4.0`；升级依赖前必须重新执行完整回归和真实界面验收。
 
 ## 已知局限
 
@@ -129,4 +118,4 @@ SSE 断线重连后根据本地最后序号补拉已提交消息，断线期间�
 - SDK：https://pi.dev/docs/latest/sdk
 - 安装包随附的 `examples/sdk/12-full-control.ts`、会话与工具类型声明是当前实现的接口依据。
 
-项目已建立本地 Git 历史，`data/`、`artifacts/`、`.env` 和 `node_modules/` 不进入版本库。尚未发布到公网或推送至 GitHub。
+项目已建立本地 Git 历史，`data/`、`release/`、`.env` 和 `node_modules/` 不进入版本库。尚未发布到公网或推送至 GitHub。

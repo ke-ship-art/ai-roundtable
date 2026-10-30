@@ -3,9 +3,12 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
-const entropy = Buffer.from('pi-multi-agent-workspace:credentials:v1').toString('base64');
-const protectScript = `Add-Type -AssemblyName System.Security;$source=[Console]::In.ReadToEnd().Trim();$plain=[Convert]::FromBase64String($source);$entropy=[Convert]::FromBase64String('${entropy}');$cipher=[System.Security.Cryptography.ProtectedData]::Protect($plain,$entropy,[System.Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Convert]::ToBase64String($cipher))`;
-const unprotectScript = `Add-Type -AssemblyName System.Security;$source=[Console]::In.ReadToEnd().Trim();$cipher=[Convert]::FromBase64String($source);$entropy=[Convert]::FromBase64String('${entropy}');$plain=[System.Security.Cryptography.ProtectedData]::Unprotect($cipher,$entropy,[System.Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Convert]::ToBase64String($plain))`;
+const currentEntropy = Buffer.from('ai-roundtable:credentials:v1').toString('base64');
+const legacyEntropy = Buffer.from('pi-multi-agent-workspace:credentials:v1').toString('base64');
+const protectScript = `Add-Type -AssemblyName System.Security;$source=[Console]::In.ReadToEnd().Trim();$plain=[Convert]::FromBase64String($source);$entropy=[Convert]::FromBase64String('${currentEntropy}');$cipher=[System.Security.Cryptography.ProtectedData]::Protect($plain,$entropy,[System.Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Convert]::ToBase64String($cipher))`;
+function unprotectScript(entropy) {
+  return `Add-Type -AssemblyName System.Security;$source=[Console]::In.ReadToEnd().Trim();$cipher=[Convert]::FromBase64String($source);$entropy=[Convert]::FromBase64String('${entropy}');$plain=[System.Security.Cryptography.ProtectedData]::Unprotect($cipher,$entropy,[System.Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Convert]::ToBase64String($plain))`;
+}
 
 function encodedCommand(script) {
   return Buffer.from(script, 'utf16le').toString('base64');
@@ -52,19 +55,30 @@ export const windowsProtector = {
     ], encoded);
   },
   async decrypt(ciphertext) {
-    const encoded = await run('powershell.exe', [
-      '-NoProfile',
-      '-NonInteractive',
-      '-EncodedCommand',
-      encodedCommand(unprotectScript),
-    ], ciphertext);
+    let encoded;
+    try {
+      encoded = await run('powershell.exe', [
+        '-NoProfile',
+        '-NonInteractive',
+        '-EncodedCommand',
+        encodedCommand(unprotectScript(currentEntropy)),
+      ], ciphertext);
+    } catch {
+      encoded = await run('powershell.exe', [
+        '-NoProfile',
+        '-NonInteractive',
+        '-EncodedCommand',
+        encodedCommand(unprotectScript(legacyEntropy)),
+      ], ciphertext);
+    }
     return Buffer.from(encoded, 'base64').toString('utf8');
   },
 };
 
 function macOSProtector(directory) {
   const account = workspaceAccount(directory);
-  const service = 'Pi Workspace credentials';
+  const service = 'AI Roundtable credentials';
+  const legacyService = 'Pi Workspace credentials';
   return {
     name: 'macOS Keychain',
     async encrypt(text) {
@@ -81,53 +95,69 @@ function macOSProtector(directory) {
         encoded,
         '-U',
       ]);
-      return JSON.stringify({ backend: 'macos-keychain', account });
+      return JSON.stringify({ backend: 'macos-keychain', account, service });
     },
     async decrypt(marker) {
       const parsed = JSON.parse(marker);
-      if (parsed.backend !== 'macos-keychain' || parsed.account !== account) {
+      if (parsed.backend !== 'macos-keychain' || !parsed.account) {
         throw new Error('macOS Keychain 凭据标记不匹配');
       }
-      const encoded = await run('/usr/bin/security', [
-        'find-generic-password',
-        '-a',
-        account,
-        '-s',
-        service,
-        '-w',
-      ]);
-      return Buffer.from(encoded, 'base64').toString('utf8');
+      let lastError;
+      for (const candidate of [...new Set([parsed.service, service, legacyService].filter(Boolean))]) {
+        try {
+          const encoded = await run('/usr/bin/security', [
+            'find-generic-password',
+            '-a',
+            parsed.account,
+            '-s',
+            candidate,
+            '-w',
+          ]);
+          return Buffer.from(encoded, 'base64').toString('utf8');
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError;
     },
   };
 }
 
 function linuxProtector(directory) {
   const account = workspaceAccount(directory);
+  const application = 'ai-roundtable';
+  const legacyApplication = 'pi-workspace';
   return {
     name: 'Linux Secret Service',
     async encrypt(text) {
       await run('secret-tool', [
         'store',
-        '--label=Pi Workspace credentials',
+        '--label=AI Roundtable credentials',
         'application',
-        'pi-workspace',
+        application,
         'workspace',
         account,
       ], text);
-      return JSON.stringify({ backend: 'linux-secret-service', account });
+      return JSON.stringify({ backend: 'linux-secret-service', account, application });
     },
     async decrypt(marker) {
       const parsed = JSON.parse(marker);
-      if (parsed.backend !== 'linux-secret-service' || parsed.account !== account) {
+      if (parsed.backend !== 'linux-secret-service' || !parsed.account) {
         throw new Error('Linux Secret Service 凭据标记不匹配');
       }
-      return run('secret-tool', [
-        'lookup',
-        'application',
-        'pi-workspace',
-        'workspace',
-        account,
-      ]);
+      for (const candidate of [
+        ...new Set([parsed.application, application, legacyApplication].filter(Boolean)),
+      ]) {
+        const value = await run('secret-tool', [
+          'lookup',
+          'application',
+          candidate,
+          'workspace',
+          parsed.account,
+        ]);
+        if (value) return value;
+      }
+      throw new Error('Linux Secret Service 中没有对应凭据');
     },
   };
 }

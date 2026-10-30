@@ -10,7 +10,7 @@ import { SecretStore } from './src/secrets.mjs';
 import { id, Store } from './src/store.mjs';
 
 const root = dirname(fileURLToPath(import.meta.url));
-const applicationName = 'pi-multi-agent-workspace';
+const applicationName = 'ai-roundtable';
 
 function recommendedGap(baseUrl, authMode) {
   if (authMode === 'none') return 0;
@@ -439,7 +439,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     throw new Error(`Node.js 22.19.0 或更高版本才能运行；当前为 ${process.versions.node}`);
   }
   const appInstance = await start({ exitOnShutdown: true });
-  console.log(`Pi Workspace: http://127.0.0.1:${appInstance.port}`);
+  console.log(`AI Roundtable: http://127.0.0.1:${appInstance.port}`);
   for (const signal of ['SIGINT', 'SIGTERM']) {
     process.on(signal, async () => {
       await appInstance.close();

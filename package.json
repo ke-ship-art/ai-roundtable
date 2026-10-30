@@ -1,21 +1,18 @@
 {
-  "name": "pi-multi-agent-workspace",
-  "version": "0.3.0",
-  "description": "Local multi-agent collaboration workspace powered by Pi",
+  "name": "ai-roundtable",
+  "version": "0.4.0",
+  "description": "Local multi-agent roundtable powered by Pi",
   "type": "module",
   "main": "desktop/main.mjs",
   "license": "MIT",
-  "author": "Pi Workspace contributors",
+  "author": "AI Roundtable contributors",
   "engines": {
     "node": ">=22.19.0"
   },
   "scripts": {
-    "start": "node --env-file-if-exists=.env server.mjs",
     "desktop": "electron .",
     "check": "node --check server.mjs && node --check src/store.mjs && node --check src/engine.mjs && node --check src/pi-session.mjs && node --check public/app.js && node --check desktop/data.mjs && node --check desktop/main.mjs",
-    "test": "node --test tests/*.test.mjs",
-    "test:live": "node --env-file-if-exists=.env scripts/live-test.mjs",
-    "package:win": "npm run check && npm test && electron-builder --win zip --x64"
+    "package:win": "npm run check && electron-builder --win zip --x64"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "1.4.0",
@@ -34,8 +31,8 @@
     }
   },
   "build": {
-    "appId": "local.piworkspace.desktop",
-    "productName": "Pi Workspace",
+    "appId": "local.airoundtable.desktop",
+    "productName": "AI Roundtable",
     "electronVersion": "44.10.0",
     "asar": true,
     "directories": {
@@ -59,6 +56,6 @@
       ],
       "signExecutable": false
     },
-    "artifactName": "Pi-Workspace-${version}-win-${arch}.${ext}"
+    "artifactName": "AI-Roundtable-${version}-win-${arch}.${ext}"
   }
 }
