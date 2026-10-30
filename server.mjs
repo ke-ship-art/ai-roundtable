@@ -142,12 +142,15 @@ export async function start({
           '/markdown.js': 'markdown.js',
           '/style.css': 'style.css',
           '/settings.css': 'settings.css',
+          '/icon.png': 'icon.png',
         };
         const file = files[url.pathname];
         if (!file) return sendJson(response, { error: 'Not found' }, 404);
         response.setHeader(
           'Content-Type',
-          file.endsWith('.js')
+          file.endsWith('.png')
+            ? 'image/png'
+            : file.endsWith('.js')
             ? 'text/javascript; charset=utf-8'
             : file.endsWith('.css')
               ? 'text/css; charset=utf-8'

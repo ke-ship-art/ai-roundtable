@@ -44,7 +44,8 @@ input:focus, textarea:focus, select:focus { outline: 2px solid #80bca1; outline-
   background: #18191e;
   border-right: 1px solid var(--line);
 }
-.brand { display: flex; gap: 12px; color: var(--accent); font-size: 30px; text-decoration: none; margin: 0 8px 35px; }
+.brand { display: flex; align-items: center; gap: 12px; color: var(--accent); text-decoration: none; margin: 0 8px 35px; }
+.brand img { width: 42px; height: 42px; object-fit: contain; }
 .brand span { color: #eee; font-size: 19px; font-weight: 600; }
 .brand small { display: block; margin-top: 7px; color: var(--muted); font-size: 8px; letter-spacing: 1.5px; }
 .section-label {
@@ -136,7 +137,8 @@ h2 { font-size: 29px; font-weight: 500; }
 #usage { color: #bec4cd; font-size: 12px; line-height: 2; }
 
 #welcome { margin: auto 0; padding: 25px 0 55px; text-align: center; }
-.hero-mark { margin-bottom: 24px; color: var(--accent); font-size: 80px; }
+.hero-mark { margin-bottom: 24px; }
+.hero-mark img { width: 104px; height: 104px; object-fit: contain; }
 #welcome p { color: var(--muted); font-size: 13px; line-height: 2; }
 .onboarding { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 35px 0; text-align: left; }
 .onboarding > div { padding: 18px 12px; border: 1px solid var(--line); border-radius: 10px; }

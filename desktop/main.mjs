@@ -113,6 +113,7 @@ async function createApplication() {
     minHeight: 680,
     backgroundColor: '#0c1018',
     title: applicationName,
+    icon: join(projectRoot, 'public', 'icon.png'),
     autoHideMenuBar: true,
     show: false,
     webPreferences: {
