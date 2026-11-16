@@ -231,3 +231,7 @@ input[type=checkbox] { width: auto; margin-right: 10px; }
   .onboarding > div { padding: 12px; }
   .composer-top span { display: none; }
 }
+
+#welcome{padding-top:36px;padding-bottom:28px}#welcome .hero-mark{margin-bottom:18px}.setup-progress{font-size:13px!important;line-height:1.7}#welcomeRoom{margin-left:10px;min-height:44px}.budget #usage{line-height:1.7;overflow-wrap:anywhere}@media(max-width:700px){#welcome{padding:20px 16px}#welcome h2{font-size:26px}#welcome .onboarding{gap:10px}#welcome .onboarding span{font-size:12px}#welcomeRoom{display:block;margin:12px auto 0}.composer-top span{display:none}}
+
+@media(max-width:700px){#welcome .hero-mark,#welcome>.eyebrow{display:none}#welcome{padding:18px 14px}#welcome h2{font-size:24px;margin:0 0 10px}#welcome>p{margin:10px 0;line-height:1.6}#welcome .onboarding{display:grid;grid-template-columns:1fr;gap:7px;margin:14px 0}#welcome .onboarding>div{display:flex;align-items:center;gap:12px;padding:10px 12px}#welcome .onboarding b{margin:0}#welcome .onboarding strong{margin:0}#welcome .onboarding span{display:none}.sidebar>.section-label{display:none}.sidebar nav:empty{display:none}.sidebar{padding-bottom:12px}body:not(.has-workspace) header .controls{display:none}#welcome #setup,#welcome #welcomeRoom{min-height:44px}}

@@ -220,7 +220,9 @@ function render() {
   $('#roomCount').textContent = state.rooms.length;
   $('#title').textContent = activeRoom?.title || '让不同的思考，一起向前。';
   $('#status').textContent = labels[activeRoom?.status] || '准备就绪';
+  document.body.classList.toggle('has-workspace',Boolean(activeRoom));
   $('#welcome').hidden = Boolean(activeRoom);
+  $('#setupProgress').textContent = `已配置 ${state.profiles.length} 个接入、${state.models.length} 个模型、${state.agents.length} 位 Agent。至少需要两位成员才能创建工作区。`;
   $('#composer').hidden = !activeRoom;
   $('#messages').hidden = !activeRoom;
 
@@ -279,7 +281,7 @@ function render() {
         )
         .join('')
     : '等待团队交付第一份成果。';
-  $('#usage').textContent = `激活 ${activeRoom.activations} / ${activeRoom.limits.activations} · Token ${activeRoom.tokens.toLocaleString()} / ${activeRoom.limits.tokens.toLocaleString()} · 并发 ${activeRoom.limits.concurrency}`;
+  $('#usage').textContent = `激活 ${activeRoom.activations} / ${activeRoom.limits.activations} · Token ${activeRoom.tokens.toLocaleString()} / ${activeRoom.limits.tokens.toLocaleString()} · 在途预留 ${activeRoom.reservedTokens || 0} · 并发 ${activeRoom.limits.concurrency}${activeRoom.unmeteredRequests ? ` · ${activeRoom.unmeteredRequests} 次未返回用量` : ''}`;
   renderStreams();
 }
 
@@ -751,3 +753,5 @@ source.addEventListener('activity', event => {
   activity[`${update.room}:${update.agent}`] = `正在执行 ${update.tool}`;
   renderStreams();
 });
+
+$('#welcomeRoom').onclick=()=>$('#newRoom').click();

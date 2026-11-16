@@ -35,7 +35,7 @@ export function installRequestPolicy(session, { profile, modelConfig, beforeRequ
   }
 
   session.agent.streamFunction = async (model, context, options) => {
-    beforeRequest();
+    beforeRequest(true, context);
     const gap = profile.requestGapMs || 0;
     const now = Date.now();
     const scheduledAt = Math.max(now, nextRequest.get(profile.baseUrl) || 0);

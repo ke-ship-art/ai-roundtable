@@ -11,8 +11,9 @@
   },
   "scripts": {
     "desktop": "electron .",
-    "check": "node --check server.mjs && node --check src/store.mjs && node --check src/engine.mjs && node --check src/pi-session.mjs && node --check public/app.js && node --check desktop/data.mjs && node --check desktop/main.mjs",
-    "package:win": "npm run check && electron-builder --win zip --x64"
+    "check": "node --check server.mjs && node --check src/store.mjs && node --check src/engine.mjs && node --check src/pi-session.mjs && node --check public/app.js && node --check desktop/data.mjs && node --check desktop/main.mjs && npm test",
+    "package:win": "npm run check && electron-builder --win zip --x64",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "1.4.0",
@@ -28,7 +29,9 @@
     },
     "openai": {
       "undici": "8.12.3"
-    }
+    },
+    "minimatch@^10": "^11.0.1",
+    "minimatch@^9": "^11.0.1"
   },
   "build": {
     "appId": "local.airoundtable.desktop",

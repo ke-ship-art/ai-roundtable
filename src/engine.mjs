@@ -7,8 +7,9 @@ import { makeSession } from './pi-session.mjs';
 const string = (max = 4000) => Type.String({ minLength: 1, maxLength: max });
 
 export class Engine {
-  constructor(store, directory, emit = () => {}, secrets = { get: () => undefined, has: () => false }) {
+  constructor(store, directory, emit = () => {}, secrets = { get: () => undefined, has: () => false }, sessionFactory = makeSession) {
     this.store = store;
+    this.sessionFactory = sessionFactory;
     this.directory = directory;
     this.emit = emit;
     this.secrets = secrets;
@@ -21,6 +22,7 @@ export class Engine {
   publicRoom(room) {
     return {
       ...room,
+      reservedTokens: [...this.active.values()].filter(run => run.room === room.id).reduce((n,run)=>n+(run.reservedTokens||0),0),
       members: Object.fromEntries(
         Object.entries(room.members).map(([agentId, member]) => [
           agentId,
@@ -152,7 +154,10 @@ export class Engine {
           if (existing) return existing;
         }
 
-        const value = await execute(input);
+        // All state tools are synchronous. Persist their effect before yielding so
+        // simultaneous replays of one call ID cannot execute the mutation twice.
+        const value = execute(input);
+        if (value?.then) throw new Error('状态工具不得异步修改共享状态');
         const result = { content: [{ type: 'text', text: JSON.stringify(value) }], details: {} };
         if (persistEffect) this.store.saveEffect(room.id, effectKey, result);
         this.change(room);
@@ -326,7 +331,9 @@ export class Engine {
         }
         if (event.type === 'message_end' && event.message.role === 'assistant') {
           const message = event.message;
-          room.tokens += message.usage?.totalTokens || 0;
+          run.reservedTokens = 0;
+          if (Number.isFinite(message.usage?.totalTokens)) room.tokens += message.usage.totalTokens;
+          else room.unmeteredRequests = (room.unmeteredRequests || 0) + 1;
           const text = message.content
             .filter(content => content.type === 'text')
             .map(content => content.text)
@@ -373,7 +380,7 @@ export class Engine {
         throw new Error(`接入“${profile.name}”尚未保存 API Key`);
       }
 
-      session = await makeSession({
+      session = await this.sessionFactory({
         modelConfig,
         profile,
         member,
@@ -382,9 +389,15 @@ export class Engine {
         key: apiKey,
         tools: this.tools(room, agent, run),
         onEvent,
-        beforeRequest: (count = true) => {
+        beforeRequest: (count = true, context = null) => {
           if (run.cancelled || room.status !== 'running') throw new Error('运行已暂停');
           if (count && ++run.turns > 8) throw new Error('单次模型轮数已达到上限');
+          if (count) {
+            const estimate = (modelConfig.maxTokens || 4096) + Math.ceil(Buffer.byteLength(JSON.stringify(context || {}))/2) + 256;
+            const others = [...this.active.values()].filter(active => active !== run && active.room === room.id).reduce((n,active)=>n+(active.reservedTokens||0),0);
+            if (room.tokens + others + estimate > room.limits.tokens) throw new Error('剩余 Token 预算不足以预留本次请求，请调整预算后继续');
+            run.reservedTokens = estimate;
+          }
         },
         systemPrompt: `你是协作工作区里的 ${agent.name}，ID ${agent.id}。职责：${agent.role}
 当前模型：${modelConfig.name}（${modelConfig.modelId}）。
@@ -421,13 +434,14 @@ ${roster}
       if (pending.hasMore) this.enqueue(room, agent.id);
     } catch (error) {
       member.status = 'error';
-      if (/尚未保存 API Key|会话文件/.test(error.message)) member.error = error.message;
+      if (/尚未保存 API Key|会话文件|Token 预算/.test(error.message)) member.error = error.message;
       else member.error = 'Agent 执行失败；请检查模型配置、凭据或上下文后重试。';
       room.status = 'paused';
       this.post(room, 'system', `${agent.name}: ${member.error}`, 'notice');
       this.emit('diagnostic', { room: room.id, agent: agent.id, category: error.name });
     } finally {
       clearTimeout(timer);
+      run.reservedTokens = 0;
       if (member.status === 'running') member.status = 'interrupted';
       this.emit('stream_end', { room: room.id, agent: agent.id });
       this.change(room);
